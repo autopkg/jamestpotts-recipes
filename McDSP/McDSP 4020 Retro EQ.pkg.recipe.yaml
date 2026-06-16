@@ -1,0 +1,17 @@
+Description: Downloads McDSP 4020 Retro EQ to be built into an installer package
+Identifier: com.github.jamestpotts-recipes.pkg.McDSP 4020 Retro EQ
+ParentRecipe: com.github.jamestpotts-recipes.download.McDSP 4020 Retro EQ
+ 
+Input:
+  NAME: McDSP 4020 Retro EQ
+  STATIC_URL: https://mcdsp.com
+
+Process:
+  - Processor: FileFinder
+    Arguments:
+      pattern: "%RECIPE_CACHE_DIR%/package/*.pkg"
+
+  - Processor: Copier
+    Arguments:
+      source_path: "%found_filename%"
+      destination_path: "%RECIPE_CACHE_DIR%/McDSP-%bundle_name%-%bundle_version%.pkg"
