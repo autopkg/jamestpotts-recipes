@@ -1,0 +1,49 @@
+Description: Downloads ipMIDI to be built into an installer package
+Identifier: com.github.jamestpotts-recipes.download.ipMIDI
+ 
+Input:
+  NAME: ipMIDI
+  STATIC_URL: https://nerds.de
+
+Process:
+  - Processor: URLTextSearcher
+    Arguments:
+      url: "%STATIC_URL%/en/download.html"
+      re_pattern: (data/.*.dmg)
+
+  - Processor: URLDownloader
+    Arguments:
+      url: "%STATIC_URL%/%match%"
+      filename: "%NAME%.dmg"
+
+  - Processor: FileFinder
+    Arguments:
+      pattern: "%pathname%/*.pkg"
+
+  - Processor: PkgCopier
+    Arguments:
+      source_pkg: "%pathname%/%found_basename%"
+      pkg_path: "%RECIPE_CACHE_DIR%/downloads/ipMIDI.pkg"
+
+  - Processor: FlatPkgUnpacker
+    Arguments:
+      flat_pkg_path: "%RECIPE_CACHE_DIR%/downloads/%NAME%.pkg"
+      destination_path: "%RECIPE_CACHE_DIR%/unpack"
+
+  - Processor: PkgPayloadUnpacker
+    Arguments:
+      pkg_payload_path: "%RECIPE_CACHE_DIR%/unpack/ipmidisetup.pkg/payload"
+      destination_path: "%RECIPE_CACHE_DIR%/payload"
+
+  - Processor: PlistReader
+    Arguments:
+      info_path: "%RECIPE_CACHE_DIR%/payload/Contents/Info.plist"
+      plist_keys:
+        CFBundleName: bundle_name
+        CFBundleIdentifier: bundle_id
+        CFBundleShortVersionString: bundle_version
+
+  - Processor: CodeSignatureVerifier
+    Arguments:
+      input_path: "%pathname%/%found_basename%"
+      requirement: anchor apple generic and identifier "de.nerds.midi.ipMIDI-Setup" and (certificate leaf[field.1.2.840.113635.100.6.1.9] /* exists */ or certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = MZYPZGGP8D)
