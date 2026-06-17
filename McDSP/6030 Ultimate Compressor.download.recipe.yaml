@@ -1,0 +1,73 @@
+Description: Downloads McDSP 6030 Ultimate Compressor to be built into an installer package
+Identifier: com.github.jamestpotts-recipes.download.McDSP 6030 Ultimate Compressor
+ 
+Input:
+  NAME: McDSP 6030 Ultimate Compressor
+  STATIC_URL: https://mcdsp.com
+
+Process:
+  - Processor: URLTextSearcher
+    Arguments:
+      url: "%STATIC_URL%"
+      re_pattern: (downloads/plugin-downloads)
+
+  - Processor: URLTextSearcher
+    Arguments:
+      url: "%STATIC_URL%/%match%"
+      re_pattern: \"(https://.*/NV/Mac/6030.*zip)\"
+
+  - Processor: URLDownloader
+    Arguments:
+      url: "%match%"
+      filename: "%NAME%.zip"
+
+  - Processor: Unarchiver
+    Arguments:
+      archive_path: "%RECIPE_CACHE_DIR%/downloads/%NAME%.zip"
+      destination_path: "%RECIPE_CACHE_DIR%/package"
+
+  - Processor: FileFinder
+    Arguments:
+      pattern: "%RECIPE_CACHE_DIR%/package/*.pkg"
+
+  - Processor: FlatPkgUnpacker
+    Arguments:
+      flat_pkg_path: "%found_filename%"
+      destination_path: "%RECIPE_CACHE_DIR%/unpack"
+
+  - Processor: FileFinder
+    Arguments:
+      pattern: "%RECIPE_CACHE_DIR%/unpack/*.pkg"
+
+  - Processor: PkgPayloadUnpacker
+    Arguments:
+      pkg_payload_path: "%found_filename%/payload"
+      destination_path: "%RECIPE_CACHE_DIR%/payload"
+
+  - Processor: FileFinder
+    Arguments:
+      pattern: "%RECIPE_CACHE_DIR%/payload/*.zip"
+
+  - Processor: Unarchiver
+    Arguments:
+      archive_path: "%found_filename%"
+      destination_path: "%RECIPE_CACHE_DIR%/unarchive"
+
+  - Processor: FileFinder
+    Arguments:
+      pattern: "%RECIPE_CACHE_DIR%/unarchive/*/*.component"
+
+  - Processor: PlistReader
+    Arguments:
+      info_path: "%found_filename%/Contents/Info.plist"
+      plist_keys:
+        CFBundleName: bundle_name
+        CFBundleIdentifier: bundle_id
+        CFBundleShortVersionString: bundle_version
+
+  - Processor: CodeSignatureVerifier
+    Arguments:
+      input_path: "%found_filename%"
+      requirement: identifier "com.mcdsp.auvst.ultimate_comp" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = "9N62DC4CK4"
+
+
